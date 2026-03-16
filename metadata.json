@@ -1,5 +1,0 @@
-{
-  "name": "Graphite - Mermaid Editor",
-  "description": "A tool to create, preview, and export high-quality Mermaid diagrams in multiple themes.",
-  "requestFramePermissions": ["clipboard-write"]
-}
