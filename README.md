@@ -1,20 +1,41 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Graphite
 
-# Run and deploy your AI Studio app
+A fast, themeable Mermaid diagram editor. Write Mermaid syntax, see a live preview, and export high-quality PNGs — all in the browser.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/e7aa3329-506a-4f66-aa0a-5b1e4b2b1590
+- Live preview with instant rendering via [beautiful-mermaid](https://github.com/nicepkg/beautiful-mermaid)
+- 5 color themes (Graphite, Ocean, Forest, Lavender, Sunset) with light and dark variants
+- Independent diagram theme selection from beautiful-mermaid's built-in themes
+- Copy PNG to clipboard or export as file (3x resolution)
+- Responsive layout — horizontal split on desktop, vertical on mobile
+- Preferences persisted to localStorage
 
-## Run Locally
+## Getting Started
 
-**Prerequisites:**  Node.js
+**Prerequisites:** Node.js 18+
 
+```bash
+npm install
+cp .env.example .env.local   # configure GEMINI_API_KEY if needed
+npm run dev                   # starts on http://localhost:3000
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server (port 3000) |
+| `npm run build` | Production build |
+| `npm run preview` | Preview production build |
+| `npm run lint` | Type-check with `tsc --noEmit` |
+| `npm run clean` | Remove `dist/` |
+
+## Tech Stack
+
+- React 19 + TypeScript
+- Vite
+- Tailwind CSS v4
+- beautiful-mermaid (Mermaid SVG rendering)
+- react-resizable-panels
+- lucide-react (icons)
