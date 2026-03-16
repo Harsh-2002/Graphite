@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+/* Mobile touch optimizations */
+@media (max-width: 768px) {
+  /* Prevent text selection on UI elements */
+  button, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Prevent iOS bounce scroll on body */
+  html, body {
+    overscroll-behavior: none;
+  }
+
+  /* Safe area padding for notched devices */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
