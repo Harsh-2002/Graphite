@@ -17,8 +17,7 @@ A fast, themeable Mermaid diagram editor. Write Mermaid syntax, see a live previ
 
 ```bash
 npm install
-cp .env.example .env.local   # configure GEMINI_API_KEY if needed
-npm run dev                   # starts on http://localhost:3000
+npm run dev   # starts on http://localhost:3000
 ```
 
 ## Scripts

@@ -22,10 +22,10 @@ Graphite is a single-page Mermaid diagram editor built with React 19, TypeScript
 - `src/hooks/` — `useTheme` (theme + dark mode state with localStorage persistence), `useMobile` (responsive breakpoint)
 - `src/themes/` — theme definitions (5 color themes, each with light/dark UI classes and Mermaid rendering colors)
 - `src/types/` — TypeScript interfaces for themes
-- `src/utils/` — `svgToPng` (canvas-based SVG-to-PNG conversion at 3x scale)
+- `src/utils/` — `svgToPng` (canvas-based SVG-to-PNG conversion at 3x scale), `prismMermaid` (custom Mermaid grammar for Prism)
 
 **Theming:** 5 color themes (zinc/Graphite, blue/Ocean, emerald/Forest, violet/Lavender, orange/Sunset). Each has separate light and dark variants for both Mermaid rendering colors and Tailwind UI class strings. Diagram themes can also be set independently via `beautiful-mermaid`'s built-in themes. Dark mode is the default; user preference is persisted to localStorage.
 
 **Path alias:** `@/*` maps to the project root (configured in both `tsconfig.json` and `vite.config.ts`).
 
-**Environment:** `GEMINI_API_KEY` is loaded via Vite's `loadEnv` and exposed as `process.env.GEMINI_API_KEY`. Copy `.env.example` to `.env.local` to configure.
+**Deployment:** GitHub Pages via `.github/workflows/deploy.yml`. The Vite `base` is set to `/Graphite/` when `GITHUB_PAGES=true`.
