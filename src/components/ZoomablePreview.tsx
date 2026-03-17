@@ -13,10 +13,12 @@ export function ZoomablePreview({ children, svgContent, ui }: ZoomablePreviewPro
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const { scale, translateX, translateY, onMouseDown, zoomIn, zoomOut, setTransform } = useZoomPan(containerRef);
+  const scaleRef = useRef(scale);
+  scaleRef.current = scale;
   const [isPanning, setIsPanning] = useState(false);
 
-  // Center content in viewport at 1x scale
-  const centerContent = useCallback(() => {
+  // Center content in viewport, preserving current scale
+  const centerContent = useCallback((resetScale?: boolean) => {
     const container = containerRef.current;
     const content = contentRef.current;
     if (!container || !content) {
@@ -27,20 +29,32 @@ export function ZoomablePreview({ children, svgContent, ui }: ZoomablePreviewPro
     const vh = container.clientHeight;
     const cw = content.offsetWidth;
     const ch = content.offsetHeight;
+    const s = resetScale ? 1 : scaleRef.current;
     setTransform({
-      scale: 1,
-      translateX: (vw - cw) / 2,
-      translateY: (vh - ch) / 2,
+      scale: s,
+      translateX: (vw - cw * s) / 2,
+      translateY: (vh - ch * s) / 2,
     });
   }, [setTransform]);
 
-  // Re-center when diagram changes
+  // Re-center at 1x when diagram changes
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      centerContent();
+      centerContent(true);
     });
     return () => cancelAnimationFrame(frame);
   }, [svgContent, centerContent]);
+
+  // Re-center (keeping zoom level) when container resizes (e.g. fullscreen toggle)
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      centerContent();
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [centerContent]);
 
   // Track panning state for cursor
   useEffect(() => {
