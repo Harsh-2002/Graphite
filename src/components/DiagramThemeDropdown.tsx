@@ -8,6 +8,8 @@ interface DiagramThemeDropdownProps {
   onChange: (value: string) => void;
   ui: UIClasses;
   autoLabel: string;
+  /** Render options inline (in document flow) instead of absolute-positioned */
+  inline?: boolean;
 }
 
 function isDarkBg(hex: string): boolean {
@@ -33,11 +35,13 @@ const OPTIONS: ThemeOption[] = [
   })),
 ];
 
-export function DiagramThemeDropdown({ value, onChange, ui, autoLabel }: DiagramThemeDropdownProps) {
+export function DiagramThemeDropdown({ value, onChange, ui, autoLabel, inline }: DiagramThemeDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  // Close on outside click (only needed for absolute dropdown)
   useEffect(() => {
+    if (inline) return;
     const handleClick = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
@@ -45,61 +49,71 @@ export function DiagramThemeDropdown({ value, onChange, ui, autoLabel }: Diagram
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
+  }, [inline]);
 
   const selected = OPTIONS.find(o => o.value === value);
   const displayLabel = value === 'auto' ? `Auto (${autoLabel})` : selected?.label ?? value;
 
+  const optionsList = (
+    <div
+      className={`${
+        inline
+          ? `mt-3 max-h-[240px] overflow-y-auto rounded-2xl border ${ui.panelBorder} ${ui.previewBg} py-1.5 px-1.5`
+          : `absolute right-0 top-full mt-2 z-50 w-[220px] max-h-[340px] overflow-y-auto rounded-xl border shadow-2xl ${ui.panelBg} ${ui.panelBorder} py-1.5 px-1.5`
+      }`}
+      style={{ scrollbarWidth: 'none' }}
+    >
+      {OPTIONS.map(opt => {
+        const isSelected = value === opt.value;
+        const label = opt.value === 'auto' ? `Auto (${autoLabel})` : opt.label;
+
+        return (
+          <button
+            key={opt.value}
+            onClick={() => {
+              onChange(opt.value);
+              if (!inline) setOpen(false);
+            }}
+            className={`w-full flex items-center gap-2 px-3 py-2.5 text-[13px] text-left rounded-xl transition-all duration-100 cursor-pointer ${
+              inline ? 'active:scale-[0.98]' : ''
+            } ${
+              isSelected
+                ? `${ui.iconBg} ${ui.iconText}`
+                : `${ui.dropdownText} ${ui.dropdownHover}`
+            }`}
+          >
+            {isSelected && <Check size={13} strokeWidth={2.5} className="shrink-0" />}
+            <span className="flex-1 truncate">{label}</span>
+            {opt.value !== 'auto' && (
+              <span className={`text-[10px] uppercase tracking-wider font-medium ${
+                isSelected ? 'opacity-60' : 'opacity-30'
+              }`}>
+                {opt.dark ? 'dark' : 'light'}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className={inline ? '' : 'relative'}>
       <button
         onClick={() => setOpen(prev => !prev)}
-        className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 cursor-pointer min-w-[170px] ${ui.dropdownBorder} ${ui.dropdownText} ${ui.dropdownBg} ${ui.dropdownHover}`}
+        className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-150 cursor-pointer ${
+          inline ? 'w-full py-2.5 rounded-xl' : 'min-w-[170px]'
+        } ${ui.dropdownBorder} ${ui.dropdownText} ${ui.dropdownBg} ${ui.dropdownHover}`}
       >
         <Palette size={13} className="shrink-0 opacity-50" />
         <span className="flex-1 text-left truncate">{displayLabel}</span>
         <ChevronDown
           size={12}
-          className={`shrink-0 opacity-40 transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+          className={`shrink-0 opacity-40 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
-      {open && (
-        <div
-          className={`absolute right-0 top-full mt-2 z-50 w-[220px] max-h-[340px] overflow-y-auto rounded-xl border shadow-2xl ${ui.panelBg} ${ui.panelBorder} py-1.5 px-1.5 scrollbar-none`}
-          style={{ scrollbarWidth: 'none' }}
-        >
-          {OPTIONS.map(opt => {
-            const isSelected = value === opt.value;
-            const label = opt.value === 'auto' ? `Auto (${autoLabel})` : opt.label;
-
-            return (
-              <button
-                key={opt.value}
-                onClick={() => {
-                  onChange(opt.value);
-                  setOpen(false);
-                }}
-                className={`w-full flex items-center gap-2 px-3 py-2 text-[13px] text-left rounded-lg transition-colors duration-100 cursor-pointer ${
-                  isSelected
-                    ? `${ui.iconBg} ${ui.iconText}`
-                    : `${ui.dropdownText} ${ui.dropdownHover}`
-                }`}
-              >
-                {isSelected && <Check size={13} strokeWidth={2.5} className="shrink-0" />}
-                <span className="flex-1 truncate">{label}</span>
-                {opt.value !== 'auto' && (
-                  <span className={`text-[10px] uppercase tracking-wider font-medium ${
-                    isSelected ? 'opacity-60' : 'opacity-30'
-                  }`}>
-                    {opt.dark ? 'dark' : 'light'}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {open && optionsList}
     </div>
   );
 }

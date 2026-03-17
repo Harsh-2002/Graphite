@@ -380,13 +380,14 @@ export default function App() {
             </div>
 
             {/* Diagram Theme */}
-            <div className="space-y-3">
-              <p className="text-sm font-medium">Diagram Theme</p>
+            <div>
+              <p className="text-sm font-medium mb-3">Diagram Theme</p>
               <DiagramThemeDropdown
                 value={diagramTheme}
                 onChange={(v) => { setDiagramTheme(v); }}
                 ui={ui}
                 autoLabel={autoLabel}
+                inline
               />
             </div>
           </div>
