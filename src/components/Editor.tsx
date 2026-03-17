@@ -45,11 +45,11 @@ export function Editor({ code, onChange, ui, isDark }: EditorProps) {
   };
 
   return (
-    <div className={`flex h-full w-full ${ui.editorBg} font-mono text-[13px] leading-6 overflow-hidden transition-colors duration-200`}>
+    <div className={`flex h-full w-full ${ui.editorBg} font-mono text-[13px] sm:text-[13px] leading-6 overflow-hidden transition-colors duration-200`}>
       {/* Line numbers */}
       <div
         ref={lineRef}
-        className={`w-12 shrink-0 text-right pr-3 py-4 select-none overflow-hidden border-r ${ui.editorLineNum} transition-colors duration-200`}
+        className={`w-10 sm:w-12 shrink-0 text-right pr-2 sm:pr-3 py-4 select-none overflow-hidden border-r ${ui.editorLineNum} transition-colors duration-200`}
       >
         {lines.map((_, i) => (
           <div key={i} className="leading-6">{i + 1}</div>
@@ -84,11 +84,13 @@ export function Editor({ code, onChange, ui, isDark }: EditorProps) {
           onChange={e => onChange(e.target.value)}
           onScroll={handleScroll}
           onKeyDown={handleKeyDown}
-          className="absolute inset-0 p-4 w-full h-full bg-transparent text-transparent caret-current resize-none outline-none whitespace-pre leading-6 z-10"
+          className="absolute inset-0 p-4 w-full h-full bg-transparent text-transparent caret-current resize-none outline-none whitespace-pre leading-6 z-10 text-[16px] sm:text-[13px]"
           style={{ caretColor: isDark ? '#d4d4d8' : '#27272a' }}
           spellCheck={false}
           wrap="off"
           placeholder="Enter Mermaid syntax..."
+          autoCapitalize="off"
+          autoCorrect="off"
         />
       </div>
     </div>

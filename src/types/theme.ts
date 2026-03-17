@@ -29,11 +29,18 @@ export interface UIClasses {
   dropdownText: string;
   toggleBg: string;
   toggleKnob: string;
+  // Mobile navigation
+  tabActive: string;
+  tabInactive: string;
+  tabIndicator: string;
+  mobileToolbarBg: string;
+  mobileToolbarBorder: string;
 }
 
 export interface Theme {
   name: string;
   dot: string;
+  accentHex: { light: string; dark: string };
   mermaid: {
     light: MermaidColors;
     dark: MermaidColors;
