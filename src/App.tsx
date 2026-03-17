@@ -356,32 +356,32 @@ export default function App() {
           title="Settings"
           ui={ui}
         >
-          <div className="space-y-5">
-            {/* Theme Selection */}
+          <div className="space-y-6">
+            {/* Color Theme */}
             <div className="space-y-3">
-              <label className={`text-xs font-semibold uppercase tracking-wider ${ui.previewTitle}`}>
-                Color Theme
-              </label>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Color Theme</p>
+                <span className={`text-xs ${ui.previewTitle}`}>{theme.name}</span>
+              </div>
+              <div className={`flex items-center justify-between rounded-2xl p-4 border ${ui.panelBorder} ${ui.previewBg}`}>
                 <ThemeSelector themeId={themeId} onSelect={setThemeId} large />
-                <span className={`text-sm ${ui.dropdownText} opacity-70`}>{theme.name}</span>
               </div>
             </div>
 
             {/* Dark Mode */}
-            <div className={`flex items-center justify-between py-1`}>
+            <div className={`flex items-center justify-between rounded-2xl p-4 border ${ui.panelBorder} ${ui.previewBg}`}>
               <div>
                 <p className="text-sm font-medium">Dark Mode</p>
-                <p className={`text-xs mt-0.5 ${ui.previewTitle}`}>{isDark ? 'On' : 'Off'}</p>
+                <p className={`text-xs mt-0.5 ${ui.previewTitle}`}>
+                  {isDark ? 'Currently on' : 'Currently off'}
+                </p>
               </div>
               <DarkModeToggle isDark={isDark} onToggle={toggleDark} ui={ui} />
             </div>
 
-            {/* Diagram Theme (only relevant on preview) */}
+            {/* Diagram Theme */}
             <div className="space-y-3">
-              <label className={`text-xs font-semibold uppercase tracking-wider ${ui.previewTitle}`}>
-                Diagram Theme
-              </label>
+              <p className="text-sm font-medium">Diagram Theme</p>
               <DiagramThemeDropdown
                 value={diagramTheme}
                 onChange={(v) => { setDiagramTheme(v); }}
@@ -399,13 +399,13 @@ export default function App() {
           title="Export Diagram"
           ui={ui}
         >
-          <div className="space-y-2">
+          <div className="space-y-3">
             <button
               onClick={handleExportPNG}
-              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left transition-colors active:scale-[0.98] ${ui.dropdownHover} ${ui.dropdownText}`}
+              className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-left border transition-all active:scale-[0.98] active:opacity-80 ${ui.panelBorder} ${ui.previewBg} ${ui.dropdownText}`}
             >
-              <div className={`w-10 h-10 rounded-xl ${ui.btnPrimary} flex items-center justify-center shrink-0`}>
-                <Image size={18} />
+              <div className={`w-11 h-11 rounded-xl ${ui.btnPrimary} flex items-center justify-center shrink-0`}>
+                <Image size={20} />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold">PNG Image</p>
@@ -415,10 +415,10 @@ export default function App() {
             </button>
             <button
               onClick={handleExportSVG}
-              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left transition-colors active:scale-[0.98] ${ui.dropdownHover} ${ui.dropdownText}`}
+              className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-left border transition-all active:scale-[0.98] active:opacity-80 ${ui.panelBorder} ${ui.previewBg} ${ui.dropdownText}`}
             >
-              <div className={`w-10 h-10 rounded-xl ${ui.btnSecondary} border flex items-center justify-center shrink-0`}>
-                <FileCode size={18} />
+              <div className={`w-11 h-11 rounded-xl ${ui.btnSecondary} border flex items-center justify-center shrink-0`}>
+                <FileCode size={20} />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold">SVG Vector</p>
