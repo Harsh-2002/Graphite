@@ -105,16 +105,23 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKey);
   }, [isFullscreen]);
 
-  // Dynamic theme-color meta tag for browser chrome (Android status bar, iOS Safari)
+  // Dynamic theme-color + body background for browser chrome blending
+  // iOS Safari bottom bar picks up the actual page background, not just theme-color
   useEffect(() => {
-    const accentHex = isDark ? theme.accentHex.dark : theme.accentHex.light;
+    const bgHex = isDark ? theme.accentHex.dark : theme.accentHex.light;
+
+    // theme-color meta (Android status bar, iOS Safari top bar)
     let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
     if (!meta) {
       meta = document.createElement('meta');
       meta.name = 'theme-color';
       document.head.appendChild(meta);
     }
-    meta.content = accentHex;
+    meta.content = bgHex;
+
+    // html + body background so iOS Safari safe areas match
+    document.documentElement.style.backgroundColor = bgHex;
+    document.body.style.backgroundColor = bgHex;
   }, [theme, isDark]);
 
   // Render SVG whenever inputs change
