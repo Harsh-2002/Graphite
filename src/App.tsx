@@ -76,23 +76,22 @@ export default function App() {
     return () => clearTimeout(timeout);
   }, [code]);
 
-  // --- Feature 2: Debounced URL hash update ---
+  // Clear hash on load so the URL stays clean (diagram was already loaded from it)
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      try {
-        const hash = lzString.compressToEncodedURIComponent(code);
-        history.replaceState(null, '', '#' + hash);
-      } catch {}
-    }, 500);
-    return () => clearTimeout(timeout);
-  }, [code]);
+    if (window.location.hash) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, []);
 
   // --- Share link handler (Web Share API on mobile) ---
   const handleShareLink = async () => {
     try {
+      const hash = lzString.compressToEncodedURIComponent(code);
+      const shareUrl = window.location.origin + window.location.pathname + '#' + hash;
+
       if (isMobile && navigator.share) {
         try {
-          await navigator.share({ title: 'Graphite Diagram', url: window.location.href });
+          await navigator.share({ title: 'Graphite Diagram', url: shareUrl });
           setLinkCopied(true);
           setTimeout(() => setLinkCopied(false), 2000);
           return;
@@ -100,7 +99,7 @@ export default function App() {
           if (err instanceof Error && err.name === 'AbortError') return;
         }
       }
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(shareUrl);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
     } catch (err) {
