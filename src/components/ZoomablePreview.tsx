@@ -20,24 +20,25 @@ export function ZoomablePreview({ children, svgContent, ui, compact }: ZoomableP
   const [isPanning, setIsPanning] = useState(false);
 
   // Center content in viewport, preserving current scale
+  const defaultScale = compact ? 0.8 : 1;
   const centerContent = useCallback((resetScale?: boolean) => {
     const container = containerRef.current;
     const content = contentRef.current;
     if (!container || !content) {
-      setTransform({ scale: 1, translateX: 0, translateY: 0 });
+      setTransform({ scale: defaultScale, translateX: 0, translateY: 0 });
       return;
     }
     const vw = container.clientWidth;
     const vh = container.clientHeight;
     const cw = content.offsetWidth;
     const ch = content.offsetHeight;
-    const s = resetScale ? 1 : scaleRef.current;
+    const s = resetScale ? defaultScale : scaleRef.current;
     setTransform({
       scale: s,
       translateX: (vw - cw * s) / 2,
       translateY: (vh - ch * s) / 2,
     });
-  }, [setTransform]);
+  }, [setTransform, defaultScale]);
 
   // Re-center at 1x when diagram changes
   useEffect(() => {
