@@ -6,7 +6,7 @@ interface ZoomPanState {
   translateY: number;
 }
 
-const MIN_SCALE = 0.1;
+export const MIN_SCALE = 0.1;
 const MAX_SCALE = 5;
 
 export function useZoomPan(containerRef: React.RefObject<HTMLDivElement | null>) {

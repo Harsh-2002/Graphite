@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { renderMermaidSVG, THEMES as BM_THEMES } from 'beautiful-mermaid';
 import lzString from 'lz-string';
-import { Copy, Code, Check, AlertCircle, Settings, Download, Image, FileCode, ChevronRight, Link, Maximize2, Minimize2 } from 'lucide-react';
+import { Copy, Code, Check, AlertCircle, Settings, Download, Image, FileCode, ChevronRight, Link, Maximize2, Minimize2, WrapText } from 'lucide-react';
 import { useTheme } from './hooks/useTheme';
 import { useMobile } from './hooks/useMobile';
+import { useWordWrap } from './hooks/useWordWrap';
 import { svgToPng, wrapSvgWithCard } from './utils/svgToPng';
 import { parseErrorLine } from './utils/parseErrorLine';
 import { Editor } from './components/Editor';
@@ -50,6 +51,7 @@ function loadStoredCode(): string {
 export default function App() {
   const { themeId, setThemeId, isDark, toggleDark, theme, ui, mermaidColors } = useTheme();
   const isMobile = useMobile();
+  const { wordWrap, toggleWordWrap } = useWordWrap();
 
   const [code, setCode] = useState(loadStoredCode);
   const [svgContent, setSvgContent] = useState('');
@@ -62,6 +64,7 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [previewBgOverride, setPreviewBgOverride] = useState<'light' | 'dark' | null>(null);
 
   // --- Feature 1: Debounced localStorage persistence ---
   useEffect(() => {
@@ -84,9 +87,19 @@ export default function App() {
     return () => clearTimeout(timeout);
   }, [code]);
 
-  // --- Feature 2: Share button handler ---
+  // --- Share link handler (Web Share API on mobile) ---
   const handleShareLink = async () => {
     try {
+      if (isMobile && navigator.share) {
+        try {
+          await navigator.share({ title: 'Graphite Diagram', url: window.location.href });
+          setLinkCopied(true);
+          setTimeout(() => setLinkCopied(false), 2000);
+          return;
+        } catch (err) {
+          if (err instanceof Error && err.name === 'AbortError') return;
+        }
+      }
       await navigator.clipboard.writeText(window.location.href);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
@@ -165,7 +178,23 @@ export default function App() {
     if (!svgContent) return;
     try {
       const blob = await svgToPng(svgContent, 3, isDark, getActiveColors());
-      // Try clipboard API first (desktop browsers)
+
+      // Mobile: try native share with file
+      if (isMobile && navigator.share) {
+        const file = new File([blob], 'graphite-diagram.png', { type: 'image/png' });
+        if (navigator.canShare?.({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file] });
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+            return;
+          } catch (err) {
+            if (err instanceof Error && err.name === 'AbortError') return;
+          }
+        }
+      }
+
+      // Desktop: clipboard API
       if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
         await navigator.clipboard.write([
           new ClipboardItem({ 'image/png': blob }),
@@ -235,6 +264,17 @@ export default function App() {
 
   const diagramIsDark = diagramTheme === 'auto' ? isDark : (isDiagramThemeDark(diagramTheme) ?? isDark);
 
+  // --- Preview background toggle ---
+  const cyclePreviewBg = useCallback(() => {
+    setPreviewBgOverride(prev => prev === null ? 'light' : prev === 'light' ? 'dark' : null);
+  }, []);
+
+  const previewBgClass = useMemo(() => {
+    if (previewBgOverride === null) return ui.previewBg;
+    if (previewBgOverride === 'light') return theme.ui.light.previewBg;
+    return theme.ui.dark.previewBg;
+  }, [previewBgOverride, ui.previewBg, theme.ui.light.previewBg, theme.ui.dark.previewBg]);
+
   // Diagram card (used in both zoom and non-zoom paths)
   const diagramCard = svgContent ? (
     <div
@@ -287,7 +327,13 @@ export default function App() {
       />
 
       {svgContent && !error ? (
-        <ZoomablePreview svgContent={svgContent} ui={ui} compact={isMobile}>
+        <ZoomablePreview
+          svgContent={svgContent}
+          ui={ui}
+          compact={isMobile}
+          previewBg={previewBgOverride}
+          onCyclePreviewBg={cyclePreviewBg}
+        >
           <div className={isMobile ? 'p-3' : 'p-6'}>
             {diagramCard}
           </div>
@@ -321,7 +367,17 @@ export default function App() {
             <div className="flex items-center gap-1.5">
               {/* Editor-mode actions */}
               {mobileTab === 'editor' && (
-                <TemplateDropdown onSelect={setCode} currentCode={code} ui={ui} />
+                <>
+                  <TemplateDropdown onSelect={setCode} currentCode={code} ui={ui} />
+                  <button
+                    onClick={toggleWordWrap}
+                    className={`h-8 w-8 flex items-center justify-center rounded-lg border transition-all duration-150 active:scale-90 ${wordWrap ? ui.btnPrimary : ui.btnSecondary}`}
+                    aria-label="Toggle word wrap"
+                    title="Word wrap"
+                  >
+                    <WrapText size={15} />
+                  </button>
+                </>
               )}
               {/* Preview-mode actions — icon-only for space */}
               {mobileTab === 'preview' && svgContent && (
@@ -364,10 +420,10 @@ export default function App() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {mobileTab === 'editor' ? (
             <div key="editor" className={`flex-1 overflow-hidden animate-fade-in ${ui.panelBg}`}>
-              <Editor code={code} onChange={setCode} ui={ui} isDark={isDark} errorLine={errorLine} />
+              <Editor code={code} onChange={setCode} ui={ui} isDark={isDark} errorLine={errorLine} wordWrap={wordWrap} />
             </div>
           ) : (
-            <div key="preview" className={`flex-1 flex flex-col overflow-hidden animate-fade-in ${ui.previewBg}`}>
+            <div key="preview" className={`flex-1 flex flex-col overflow-hidden animate-fade-in ${previewBgClass}`}>
               {previewContent}
             </div>
           )}
@@ -480,6 +536,13 @@ export default function App() {
                 </div>
                 <div className="flex items-center gap-2">
                   <TemplateDropdown onSelect={setCode} currentCode={code} ui={ui} />
+                  <button
+                    onClick={toggleWordWrap}
+                    className={`flex items-center gap-1.5 p-1.5 text-xs font-medium border rounded-lg transition-all duration-150 cursor-pointer ${wordWrap ? ui.btnPrimary : ui.btnSecondary}`}
+                    title="Toggle word wrap"
+                  >
+                    <WrapText size={14} />
+                  </button>
                   <div className={`w-px h-4 ${ui.panelBorder} border-l`} />
                   <ThemeSelector themeId={themeId} onSelect={setThemeId} />
                   <div className={`w-px h-4 ${ui.panelBorder} border-l`} />
@@ -489,7 +552,7 @@ export default function App() {
 
               {/* Editor Body */}
               <div className="flex-1 overflow-hidden">
-                <Editor code={code} onChange={setCode} ui={ui} isDark={isDark} errorLine={errorLine} />
+                <Editor code={code} onChange={setCode} ui={ui} isDark={isDark} errorLine={errorLine} wordWrap={wordWrap} />
               </div>
             </div>
 
@@ -499,7 +562,7 @@ export default function App() {
         )}
 
         {/* Preview Panel */}
-        <div className={`flex-1 flex flex-col ${ui.previewBg} relative z-0 transition-colors duration-200`}>
+        <div className={`flex-1 flex flex-col ${previewBgClass} relative z-0 transition-colors duration-200`}>
           {/* Preview Header */}
           <div className={`h-12 border-b ${ui.panelBorder} flex items-center px-4 justify-between shrink-0 ${ui.previewHeaderBg} transition-colors duration-200`}>
             <span className={`text-xs font-medium uppercase tracking-wider ${ui.previewTitle} transition-colors duration-200`}>

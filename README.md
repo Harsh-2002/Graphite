@@ -2,6 +2,10 @@
 
 A fast, themeable Mermaid diagram editor. Write Mermaid syntax, see a live preview, and export high-quality PNGs — all in the browser.
 
+![Graphite Editor — Light Theme](assets/screenshot-light.png)
+
+![Graphite Editor — Dark Theme](assets/screenshot-dark.png)
+
 ## Features
 
 - Live preview with instant rendering via [beautiful-mermaid](https://github.com/nicepkg/beautiful-mermaid)
