@@ -142,7 +142,7 @@ const THEMES: Record<ThemeId, Theme> = {
   emerald: {
     name: 'Forest',
     dot: 'bg-emerald-500',
-    accentHex: { light: '#ffffff', dark: '#0c0a09' },
+    accentHex: { light: '#ffffff', dark: '#1c1917' },
     mermaid: {
       light: { fg: '#064e3b', line: '#6ee7b7', border: '#a7f3d0', surface: '#ffffff', accent: '#059669' },
       dark: { fg: '#ecfdf5', line: '#10b981', border: '#065f46', surface: '#022c22', accent: '#34d399' },
@@ -211,7 +211,7 @@ const THEMES: Record<ThemeId, Theme> = {
   violet: {
     name: 'Lavender',
     dot: 'bg-violet-500',
-    accentHex: { light: '#ffffff', dark: '#0a0a0a' },
+    accentHex: { light: '#ffffff', dark: '#171717' },
     mermaid: {
       light: { fg: '#4c1d95', line: '#c4b5fd', border: '#ddd6fe', surface: '#ffffff', accent: '#7c3aed' },
       dark: { fg: '#f5f3ff', line: '#8b5cf6', border: '#4c1d95', surface: '#1a1530', accent: '#a78bfa' },
@@ -280,7 +280,7 @@ const THEMES: Record<ThemeId, Theme> = {
   orange: {
     name: 'Sunset',
     dot: 'bg-orange-500',
-    accentHex: { light: '#ffffff', dark: '#0c0a09' },
+    accentHex: { light: '#ffffff', dark: '#1c1917' },
     mermaid: {
       light: { fg: '#7c2d12', line: '#fdba74', border: '#fed7aa', surface: '#ffffff', accent: '#ea580c' },
       dark: { fg: '#fff7ed', line: '#f97316', border: '#9a3412', surface: '#1c0f05', accent: '#fb923c' },

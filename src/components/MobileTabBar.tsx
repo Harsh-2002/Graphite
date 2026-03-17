@@ -14,27 +14,29 @@ export function MobileTabBar({ activeTab, onTabChange, ui }: MobileTabBarProps) 
     <div className={`flex border-t ${ui.mobileToolbarBorder} ${ui.mobileToolbarBg} shrink-0 transition-colors duration-200 safe-area-bottom`}>
       <button
         onClick={() => onTabChange('editor')}
-        className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-colors duration-150 relative ${
+        className={`flex-1 flex flex-col items-center justify-center gap-0.5 pt-2 pb-2.5 transition-colors duration-150 ${
           activeTab === 'editor' ? ui.tabActive : ui.tabInactive
         }`}
       >
-        <Code size={20} strokeWidth={activeTab === 'editor' ? 2.5 : 1.5} />
-        <span className="text-[11px] font-medium">Editor</span>
-        {activeTab === 'editor' && (
-          <span className={`absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 rounded-full ${ui.tabIndicator}`} />
-        )}
+        <div className={`flex items-center justify-center w-16 h-8 rounded-full transition-colors duration-200 ${
+          activeTab === 'editor' ? ui.tabIndicator + ' text-white' : ''
+        }`}>
+          <Code size={18} strokeWidth={activeTab === 'editor' ? 2.5 : 1.5} />
+        </div>
+        <span className={`text-[11px] font-semibold ${activeTab === 'editor' ? '' : 'font-medium'}`}>Editor</span>
       </button>
       <button
         onClick={() => onTabChange('preview')}
-        className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-colors duration-150 relative ${
+        className={`flex-1 flex flex-col items-center justify-center gap-0.5 pt-2 pb-2.5 transition-colors duration-150 ${
           activeTab === 'preview' ? ui.tabActive : ui.tabInactive
         }`}
       >
-        <Eye size={20} strokeWidth={activeTab === 'preview' ? 2.5 : 1.5} />
-        <span className="text-[11px] font-medium">Preview</span>
-        {activeTab === 'preview' && (
-          <span className={`absolute top-0 left-1/2 -translate-x-1/2 w-12 h-0.5 rounded-full ${ui.tabIndicator}`} />
-        )}
+        <div className={`flex items-center justify-center w-16 h-8 rounded-full transition-colors duration-200 ${
+          activeTab === 'preview' ? ui.tabIndicator + ' text-white' : ''
+        }`}>
+          <Eye size={18} strokeWidth={activeTab === 'preview' ? 2.5 : 1.5} />
+        </div>
+        <span className={`text-[11px] font-semibold ${activeTab === 'preview' ? '' : 'font-medium'}`}>Preview</span>
       </button>
     </div>
   );

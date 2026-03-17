@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { renderMermaidSVG, THEMES as BM_THEMES } from 'beautiful-mermaid';
-import { Copy, Code, Check, AlertCircle, Settings } from 'lucide-react';
+import { Copy, Code, Check, AlertCircle, Settings, Download, Image, FileCode, ChevronRight } from 'lucide-react';
 import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
 
 import { useTheme } from './hooks/useTheme';
@@ -12,6 +12,7 @@ import { ThemeSelector } from './components/ThemeSelector';
 import { DiagramThemeDropdown, isDiagramThemeDark } from './components/DiagramThemeDropdown';
 import { ExportDropdown } from './components/ExportDropdown';
 import { MobileTabBar } from './components/MobileTabBar';
+import { MobileBottomSheet } from './components/MobileBottomSheet';
 import type { MobileTab } from './components/MobileTabBar';
 
 const DEFAULT_MERMAID = `graph TD
@@ -31,9 +32,10 @@ export default function App() {
   const [diagramTheme, setDiagramTheme] = useState('auto');
   const [copied, setCopied] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('editor');
-  const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [exportSheetOpen, setExportSheetOpen] = useState(false);
 
-  // Dynamic theme-color meta tag for Android browser chrome
+  // Dynamic theme-color meta tag for browser chrome (Android status bar, iOS Safari)
   useEffect(() => {
     const accentHex = isDark ? theme.accentHex.dark : theme.accentHex.light;
     let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
@@ -108,6 +110,7 @@ export default function App() {
     try {
       const blob = await svgToPng(svgContent, 3, isDark, getActiveColors());
       downloadBlob(blob, 'graphite-diagram.png');
+      setExportSheetOpen(false);
     } catch (err) {
       console.error('Failed to export PNG:', err);
     }
@@ -117,6 +120,7 @@ export default function App() {
     if (!svgContent) return;
     const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
     downloadBlob(blob, 'graphite-diagram.svg');
+    setExportSheetOpen(false);
   };
 
   const diagramCardStyle = useMemo(() => {
@@ -184,60 +188,44 @@ export default function App() {
       <div
         className={`h-[100dvh] w-screen flex flex-col overflow-hidden font-sans transition-colors duration-200 ${ui.appBg} ${ui.appText} ${ui.selection}`}
       >
-        {/* Mobile Header */}
-        <div className={`h-12 border-b ${ui.mobileToolbarBorder} flex items-center px-3 justify-between shrink-0 ${ui.mobileToolbarBg} transition-colors duration-200`}>
-          <div className="flex items-center gap-2 font-semibold text-sm tracking-tight">
-            <div className={`w-6 h-6 rounded-md ${ui.iconBg} ${ui.iconText} flex items-center justify-center`}>
-              <Code size={14} strokeWidth={2.5} />
+        {/* Mobile Header - matches browser chrome color for seamless blend */}
+        <div className={`shrink-0 safe-area-top ${ui.mobileToolbarBg} transition-colors duration-200`}>
+          <div className={`h-14 border-b ${ui.mobileToolbarBorder} flex items-center px-4 justify-between`}>
+            <div className="flex items-center gap-2.5 font-semibold text-[15px] tracking-tight">
+              <div className={`w-7 h-7 rounded-lg ${ui.iconBg} ${ui.iconText} flex items-center justify-center`}>
+                <Code size={15} strokeWidth={2.5} />
+              </div>
+              Graphite
             </div>
-            Graphite
-          </div>
-          <div className="flex items-center gap-2">
-            {mobileTab === 'preview' && (
-              <>
-                <button
-                  onClick={handleCopyPNG}
-                  disabled={!svgContent}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium border rounded-lg transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed ${ui.btnSecondary}`}
-                >
-                  {copied ? <Check size={12} className="text-emerald-500" /> : <Copy size={12} />}
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
-                <ExportDropdown
-                  disabled={!svgContent}
-                  onExportPNG={handleExportPNG}
-                  onExportSVG={handleExportSVG}
-                  ui={ui}
-                />
-              </>
-            )}
-            <button
-              onClick={() => setMobileSettingsOpen(prev => !prev)}
-              className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors duration-150 ${ui.btnSecondary} border`}
-              aria-label="Settings"
-            >
-              <Settings size={16} />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Preview-mode actions */}
+              {mobileTab === 'preview' && svgContent && (
+                <>
+                  <button
+                    onClick={handleCopyPNG}
+                    className={`h-9 flex items-center gap-1.5 px-3 text-xs font-medium border rounded-xl transition-all duration-150 active:scale-95 ${ui.btnSecondary}`}
+                  >
+                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    {copied ? 'Copied!' : 'Copy'}
+                  </button>
+                  <button
+                    onClick={() => setExportSheetOpen(true)}
+                    className={`h-9 w-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95 shadow-sm ${ui.btnPrimary}`}
+                  >
+                    <Download size={16} />
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className={`h-9 w-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95 ${ui.btnSecondary} border`}
+                aria-label="Settings"
+              >
+                <Settings size={16} />
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* Mobile Settings Panel (collapsible) */}
-        {mobileSettingsOpen && (
-          <div className={`border-b ${ui.mobileToolbarBorder} ${ui.mobileToolbarBg} px-3 py-3 flex flex-wrap items-center gap-3 transition-colors duration-200`}>
-            <div className="flex items-center gap-2">
-              <span className={`text-[11px] font-medium uppercase tracking-wider ${ui.previewTitle}`}>Theme</span>
-              <ThemeSelector themeId={themeId} onSelect={setThemeId} />
-            </div>
-            <div className={`w-px h-5 ${ui.mobileToolbarBorder} border-l`} />
-            <DarkModeToggle isDark={isDark} onToggle={toggleDark} ui={ui} />
-            {mobileTab === 'preview' && (
-              <>
-                <div className={`w-px h-5 ${ui.mobileToolbarBorder} border-l`} />
-                <DiagramThemeDropdown value={diagramTheme} onChange={setDiagramTheme} ui={ui} autoLabel={autoLabel} />
-              </>
-            )}
-          </div>
-        )}
 
         {/* Mobile Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
@@ -254,6 +242,86 @@ export default function App() {
 
         {/* Mobile Bottom Tab Bar */}
         <MobileTabBar activeTab={mobileTab} onTabChange={setMobileTab} ui={ui} />
+
+        {/* Settings Bottom Sheet */}
+        <MobileBottomSheet
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          title="Settings"
+          ui={ui}
+        >
+          <div className="space-y-5">
+            {/* Theme Selection */}
+            <div className="space-y-3">
+              <label className={`text-xs font-semibold uppercase tracking-wider ${ui.previewTitle}`}>
+                Color Theme
+              </label>
+              <div className="flex items-center gap-3">
+                <ThemeSelector themeId={themeId} onSelect={setThemeId} large />
+                <span className={`text-sm ${ui.dropdownText} opacity-70`}>{theme.name}</span>
+              </div>
+            </div>
+
+            {/* Dark Mode */}
+            <div className={`flex items-center justify-between py-1`}>
+              <div>
+                <p className="text-sm font-medium">Dark Mode</p>
+                <p className={`text-xs mt-0.5 ${ui.previewTitle}`}>{isDark ? 'On' : 'Off'}</p>
+              </div>
+              <DarkModeToggle isDark={isDark} onToggle={toggleDark} ui={ui} />
+            </div>
+
+            {/* Diagram Theme (only relevant on preview) */}
+            <div className="space-y-3">
+              <label className={`text-xs font-semibold uppercase tracking-wider ${ui.previewTitle}`}>
+                Diagram Theme
+              </label>
+              <DiagramThemeDropdown
+                value={diagramTheme}
+                onChange={(v) => { setDiagramTheme(v); }}
+                ui={ui}
+                autoLabel={autoLabel}
+              />
+            </div>
+          </div>
+        </MobileBottomSheet>
+
+        {/* Export Bottom Sheet */}
+        <MobileBottomSheet
+          open={exportSheetOpen}
+          onClose={() => setExportSheetOpen(false)}
+          title="Export Diagram"
+          ui={ui}
+        >
+          <div className="space-y-2">
+            <button
+              onClick={handleExportPNG}
+              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left transition-colors active:scale-[0.98] ${ui.dropdownHover} ${ui.dropdownText}`}
+            >
+              <div className={`w-10 h-10 rounded-xl ${ui.btnPrimary} flex items-center justify-center shrink-0`}>
+                <Image size={18} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold">PNG Image</p>
+                <p className={`text-xs mt-0.5 ${ui.previewTitle}`}>High-resolution 3x scale</p>
+              </div>
+              <ChevronRight size={16} className="opacity-30" />
+            </button>
+            <button
+              onClick={handleExportSVG}
+              className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-left transition-colors active:scale-[0.98] ${ui.dropdownHover} ${ui.dropdownText}`}
+            >
+              <div className={`w-10 h-10 rounded-xl ${ui.btnSecondary} border flex items-center justify-center shrink-0`}>
+                <FileCode size={18} />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold">SVG Vector</p>
+                <p className={`text-xs mt-0.5 ${ui.previewTitle}`}>Scalable vector graphic</p>
+              </div>
+              <ChevronRight size={16} className="opacity-30" />
+            </button>
+          </div>
+        </MobileBottomSheet>
       </div>
     );
   }
