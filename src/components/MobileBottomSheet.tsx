@@ -27,7 +27,7 @@ export function MobileBottomSheet({ open, onClose, title, ui, children }: Mobile
     <div className="fixed inset-0 z-50 flex items-end">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
@@ -45,7 +45,7 @@ export function MobileBottomSheet({ open, onClose, title, ui, children }: Mobile
           <h3 className="text-sm font-semibold">{title}</h3>
           <button
             onClick={onClose}
-            className={`w-8 h-8 flex items-center justify-center rounded-full ${ui.dropdownHover} transition-colors`}
+            className={`w-8 h-8 flex items-center justify-center rounded-full ${ui.dropdownHover} transition-all active:scale-90`}
             aria-label="Close"
           >
             <X size={18} />

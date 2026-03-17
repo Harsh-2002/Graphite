@@ -33,6 +33,7 @@ export interface UIClasses {
   tabActive: string;
   tabInactive: string;
   tabIndicator: string;
+  tabIndicatorText: string;
   mobileToolbarBg: string;
   mobileToolbarBorder: string;
 }

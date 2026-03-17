@@ -336,11 +336,11 @@ export default function App() {
         {/* Mobile Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {mobileTab === 'editor' ? (
-            <div className={`flex-1 overflow-hidden ${ui.panelBg}`}>
+            <div key="editor" className={`flex-1 overflow-hidden animate-fade-in ${ui.panelBg}`}>
               <Editor code={code} onChange={setCode} ui={ui} isDark={isDark} errorLine={errorLine} />
             </div>
           ) : (
-            <div className={`flex-1 flex flex-col overflow-hidden ${ui.previewBg}`}>
+            <div key="preview" className={`flex-1 flex flex-col overflow-hidden animate-fade-in ${ui.previewBg}`}>
               {previewContent}
             </div>
           )}

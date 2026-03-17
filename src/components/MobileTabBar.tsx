@@ -14,12 +14,12 @@ export function MobileTabBar({ activeTab, onTabChange, ui }: MobileTabBarProps) 
     <div className={`flex border-t ${ui.mobileToolbarBorder} ${ui.mobileToolbarBg} shrink-0 transition-colors duration-200 safe-area-bottom`}>
       <button
         onClick={() => onTabChange('editor')}
-        className={`flex-1 flex flex-col items-center justify-center gap-0.5 pt-2 pb-2.5 transition-colors duration-150 ${
+        className={`flex-1 flex flex-col items-center justify-center gap-0.5 pt-2 pb-2.5 transition-all duration-150 active:scale-95 active:opacity-70 ${
           activeTab === 'editor' ? ui.tabActive : ui.tabInactive
         }`}
       >
-        <div className={`flex items-center justify-center w-16 h-8 rounded-full transition-colors duration-200 ${
-          activeTab === 'editor' ? ui.tabIndicator + ' text-white' : ''
+        <div className={`flex items-center justify-center w-16 h-8 rounded-full transition-all duration-200 ${
+          activeTab === 'editor' ? `${ui.tabIndicator} ${ui.tabIndicatorText}` : ''
         }`}>
           <Code size={18} strokeWidth={activeTab === 'editor' ? 2.5 : 1.5} />
         </div>
@@ -27,12 +27,12 @@ export function MobileTabBar({ activeTab, onTabChange, ui }: MobileTabBarProps) 
       </button>
       <button
         onClick={() => onTabChange('preview')}
-        className={`flex-1 flex flex-col items-center justify-center gap-0.5 pt-2 pb-2.5 transition-colors duration-150 ${
+        className={`flex-1 flex flex-col items-center justify-center gap-0.5 pt-2 pb-2.5 transition-all duration-150 active:scale-95 active:opacity-70 ${
           activeTab === 'preview' ? ui.tabActive : ui.tabInactive
         }`}
       >
-        <div className={`flex items-center justify-center w-16 h-8 rounded-full transition-colors duration-200 ${
-          activeTab === 'preview' ? ui.tabIndicator + ' text-white' : ''
+        <div className={`flex items-center justify-center w-16 h-8 rounded-full transition-all duration-200 ${
+          activeTab === 'preview' ? `${ui.tabIndicator} ${ui.tabIndicatorText}` : ''
         }`}>
           <Eye size={18} strokeWidth={activeTab === 'preview' ? 2.5 : 1.5} />
         </div>
