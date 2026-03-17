@@ -14,7 +14,7 @@ export interface UIClasses {
   panelBorder: string;
   iconBg: string;
   iconText: string;
-  resizeHandle: string;
+
   previewBg: string;
   previewHeaderBg: string;
   previewTitle: string;

@@ -1,16 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { renderMermaidSVG, THEMES as BM_THEMES } from 'beautiful-mermaid';
-import { Copy, Code, Check, AlertCircle, Settings, Download, Image, FileCode, ChevronRight } from 'lucide-react';
-import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels';
-
+import lzString from 'lz-string';
+import { Copy, Code, Check, AlertCircle, Settings, Download, Image, FileCode, ChevronRight, Link, Maximize2, Minimize2 } from 'lucide-react';
 import { useTheme } from './hooks/useTheme';
 import { useMobile } from './hooks/useMobile';
-import { svgToPng } from './utils/svgToPng';
+import { svgToPng, wrapSvgWithCard } from './utils/svgToPng';
+import { parseErrorLine } from './utils/parseErrorLine';
 import { Editor } from './components/Editor';
 import { DarkModeToggle } from './components/DarkModeToggle';
 import { ThemeSelector } from './components/ThemeSelector';
 import { DiagramThemeDropdown, isDiagramThemeDark } from './components/DiagramThemeDropdown';
 import { ExportDropdown } from './components/ExportDropdown';
+import { TemplateDropdown } from './components/TemplateDropdown';
+import { ZoomablePreview } from './components/ZoomablePreview';
 import { MobileTabBar } from './components/MobileTabBar';
 import { MobileBottomSheet } from './components/MobileBottomSheet';
 import type { MobileTab } from './components/MobileTabBar';
@@ -22,18 +24,86 @@ const DEFAULT_MERMAID = `graph TD
     C -->|Two| E[iPhone]
     C -->|Three| F[Car]`;
 
+const STORAGE_KEY_CODE = 'graphite-code';
+
+// --- Feature 1: localStorage persistence ---
+function loadStoredCode(): string {
+  // Feature 2: URL hash takes priority
+  try {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      // Try lz-string first, fall back to old btoa(encodeURIComponent()) format
+      const decoded = lzString.decompressFromEncodedURIComponent(hash);
+      if (decoded) return decoded;
+      return decodeURIComponent(atob(hash));
+    }
+  } catch {}
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_CODE);
+    if (stored !== null) return stored;
+  } catch {}
+
+  return DEFAULT_MERMAID;
+}
+
 export default function App() {
   const { themeId, setThemeId, isDark, toggleDark, theme, ui, mermaidColors } = useTheme();
   const isMobile = useMobile();
 
-  const [code, setCode] = useState(DEFAULT_MERMAID);
+  const [code, setCode] = useState(loadStoredCode);
   const [svgContent, setSvgContent] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [errorLine, setErrorLine] = useState<number | null>(null);
   const [diagramTheme, setDiagramTheme] = useState('auto');
   const [copied, setCopied] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('editor');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [exportSheetOpen, setExportSheetOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // --- Feature 1: Debounced localStorage persistence ---
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY_CODE, code);
+      } catch {}
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [code]);
+
+  // --- Feature 2: Debounced URL hash update ---
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      try {
+        const hash = lzString.compressToEncodedURIComponent(code);
+        history.replaceState(null, '', '#' + hash);
+      } catch {}
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [code]);
+
+  // --- Feature 2: Share button handler ---
+  const handleShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  };
+
+  // --- Feature 4: Escape key exits fullscreen ---
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFullscreen(false);
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isFullscreen]);
 
   // Dynamic theme-color meta tag for browser chrome (Android status bar, iOS Safari)
   useEffect(() => {
@@ -52,6 +122,7 @@ export default function App() {
     if (!code.trim()) {
       setSvgContent('');
       setError(null);
+      setErrorLine(null);
       return;
     }
 
@@ -71,8 +142,11 @@ export default function App() {
       });
       setSvgContent(svg);
       setError(null);
+      setErrorLine(null);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to render diagram');
+      const msg = err instanceof Error ? err.message : 'Failed to render diagram';
+      setError(msg);
+      setErrorLine(parseErrorLine(msg, code));
     }
   }, [code, mermaidColors, diagramTheme]);
 
@@ -118,7 +192,8 @@ export default function App() {
 
   const handleExportSVG = () => {
     if (!svgContent) return;
-    const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+    const wrapped = wrapSvgWithCard(svgContent, isDark, getActiveColors());
+    const blob = new Blob([wrapped], { type: 'image/svg+xml;charset=utf-8' });
     downloadBlob(blob, 'graphite-diagram.svg');
     setExportSheetOpen(false);
   };
@@ -137,9 +212,48 @@ export default function App() {
 
   const diagramIsDark = diagramTheme === 'auto' ? isDark : (isDiagramThemeDark(diagramTheme) ?? isDark);
 
-  // Preview content (shared between mobile and desktop)
+  // Diagram card (used in both zoom and non-zoom paths)
+  const diagramCard = svgContent ? (
+    <div
+      className={`border shadow-lg rounded-2xl p-4 sm:p-8 transition-all duration-200 z-10 flex items-center justify-center ${
+        diagramTheme === 'auto'
+          ? `${ui.panelBg} ${ui.panelBorder}`
+          : diagramIsDark
+            ? 'border-white/10'
+            : 'border-black/10'
+      }`}
+      style={diagramTheme !== 'auto' ? diagramCardStyle : undefined}
+      dangerouslySetInnerHTML={{ __html: svgContent }}
+    />
+  ) : null;
+
+  // Preview content for non-zoom paths (empty state, error state, mobile)
+  const previewInner = (
+    <div className="min-h-full min-w-full flex items-center justify-center p-2 sm:p-4">
+      {!code.trim() ? (
+        <div className={`flex flex-col items-center justify-center text-center max-w-xs opacity-60 ${ui.previewTitle}`}>
+          <Code size={40} strokeWidth={1} className="mb-4 opacity-40" />
+          <p className="text-sm">Write Mermaid syntax in the editor to see your diagram here.</p>
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 sm:px-5 py-3 sm:py-4 rounded-xl max-w-lg w-full z-10 flex gap-3 items-start">
+          <AlertCircle className="shrink-0 mt-0.5" size={16} />
+          <div>
+            <h3 className="font-semibold mb-1 text-sm">Syntax Error</h3>
+            <p className="text-xs font-mono whitespace-pre-wrap break-words opacity-80 leading-relaxed">
+              {error}
+            </p>
+          </div>
+        </div>
+      ) : (
+        diagramCard
+      )}
+    </div>
+  );
+
+  // Wrap with zoom/pan for desktop, or plain for mobile / error / empty states
   const previewContent = (
-    <div className="flex-1 overflow-auto p-4 sm:p-6 flex items-center justify-center relative">
+    <div className="flex-1 overflow-hidden relative">
       {/* Dot pattern */}
       <div
         className="absolute inset-0 opacity-[0.03] pointer-events-none"
@@ -149,36 +263,17 @@ export default function App() {
         }}
       />
 
-      <div className="min-h-full min-w-full flex items-center justify-center p-2 sm:p-4">
-        {!code.trim() ? (
-          <div className={`flex flex-col items-center justify-center text-center max-w-xs opacity-60 ${ui.previewTitle}`}>
-            <Code size={40} strokeWidth={1} className="mb-4 opacity-40" />
-            <p className="text-sm">Write Mermaid syntax in the editor to see your diagram here.</p>
+      {!isMobile && svgContent && !error ? (
+        <ZoomablePreview svgContent={svgContent} ui={ui}>
+          <div className="p-6">
+            {diagramCard}
           </div>
-        ) : error ? (
-          <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 px-4 sm:px-5 py-3 sm:py-4 rounded-xl max-w-lg w-full z-10 flex gap-3 items-start">
-            <AlertCircle className="shrink-0 mt-0.5" size={16} />
-            <div>
-              <h3 className="font-semibold mb-1 text-sm">Syntax Error</h3>
-              <p className="text-xs font-mono whitespace-pre-wrap break-words opacity-80 leading-relaxed">
-                {error}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div
-            className={`border shadow-lg rounded-2xl p-4 sm:p-8 transition-all duration-200 z-10 flex items-center justify-center ${
-              diagramTheme === 'auto'
-                ? `${ui.panelBg} ${ui.panelBorder}`
-                : diagramIsDark
-                  ? 'border-white/10'
-                  : 'border-black/10'
-            }`}
-            style={diagramTheme !== 'auto' ? diagramCardStyle : undefined}
-            dangerouslySetInnerHTML={{ __html: svgContent }}
-          />
-        )}
-      </div>
+        </ZoomablePreview>
+      ) : (
+        <div className="h-full w-full overflow-auto p-4 sm:p-6 flex items-center justify-center">
+          {previewInner}
+        </div>
+      )}
     </div>
   );
 
@@ -198,9 +293,20 @@ export default function App() {
               Graphite
             </div>
             <div className="flex items-center gap-2">
+              {/* Editor-mode actions */}
+              {mobileTab === 'editor' && (
+                <TemplateDropdown onSelect={setCode} currentCode={code} ui={ui} />
+              )}
               {/* Preview-mode actions */}
               {mobileTab === 'preview' && svgContent && (
                 <>
+                  <button
+                    onClick={handleShareLink}
+                    className={`h-9 flex items-center gap-1.5 px-3 text-xs font-medium border rounded-xl transition-all duration-150 active:scale-95 ${ui.btnSecondary}`}
+                  >
+                    {linkCopied ? <Check size={14} className="text-emerald-500" /> : <Link size={14} />}
+                    {linkCopied ? 'Copied!' : 'Share'}
+                  </button>
                   <button
                     onClick={handleCopyPNG}
                     className={`h-9 flex items-center gap-1.5 px-3 text-xs font-medium border rounded-xl transition-all duration-150 active:scale-95 ${ui.btnSecondary}`}
@@ -231,7 +337,7 @@ export default function App() {
         <div className="flex-1 flex flex-col overflow-hidden">
           {mobileTab === 'editor' ? (
             <div className={`flex-1 overflow-hidden ${ui.panelBg}`}>
-              <Editor code={code} onChange={setCode} ui={ui} isDark={isDark} />
+              <Editor code={code} onChange={setCode} ui={ui} isDark={isDark} errorLine={errorLine} />
             </div>
           ) : (
             <div className={`flex-1 flex flex-col overflow-hidden ${ui.previewBg}`}>
@@ -331,37 +437,41 @@ export default function App() {
     <div
       className={`h-screen w-screen flex flex-col overflow-hidden font-sans transition-colors duration-200 ${ui.appBg} ${ui.appText} ${ui.selection}`}
     >
-      <PanelGroup direction="horizontal">
-        {/* Editor Panel */}
-        <Panel defaultSize="40%" minSize="35%" className={`flex flex-col ${ui.panelBg} relative z-10 transition-colors duration-200`}>
-          {/* Editor Header */}
-          <div className={`h-12 border-b ${ui.panelBorder} flex items-center px-4 justify-between shrink-0 transition-colors duration-200`}>
-            <div className="flex items-center gap-2.5 font-semibold text-sm tracking-tight">
-              <div className={`w-6 h-6 rounded-md ${ui.iconBg} ${ui.iconText} flex items-center justify-center`}>
-                <Code size={14} strokeWidth={2.5} />
+      <div className="flex-1 flex flex-row overflow-hidden">
+        {/* Editor Panel — hidden in fullscreen */}
+        {!isFullscreen && (
+          <>
+            <div className={`w-[35%] shrink-0 flex flex-col ${ui.panelBg} relative z-10 transition-colors duration-200`}>
+              {/* Editor Header */}
+              <div className={`h-12 border-b ${ui.panelBorder} flex items-center px-4 justify-between shrink-0 transition-colors duration-200`}>
+                <div className="flex items-center gap-2.5 font-semibold text-sm tracking-tight">
+                  <div className={`w-6 h-6 rounded-md ${ui.iconBg} ${ui.iconText} flex items-center justify-center`}>
+                    <Code size={14} strokeWidth={2.5} />
+                  </div>
+                  Graphite
+                </div>
+                <div className="flex items-center gap-2">
+                  <TemplateDropdown onSelect={setCode} currentCode={code} ui={ui} />
+                  <div className={`w-px h-4 ${ui.panelBorder} border-l`} />
+                  <ThemeSelector themeId={themeId} onSelect={setThemeId} />
+                  <div className={`w-px h-4 ${ui.panelBorder} border-l`} />
+                  <DarkModeToggle isDark={isDark} onToggle={toggleDark} ui={ui} />
+                </div>
               </div>
-              Graphite
-            </div>
-            <div className="flex items-center gap-3">
-              <ThemeSelector themeId={themeId} onSelect={setThemeId} />
-              <div className={`w-px h-4 ${ui.panelBorder} border-l`} />
-              <DarkModeToggle isDark={isDark} onToggle={toggleDark} ui={ui} />
-            </div>
-          </div>
 
-          {/* Editor Body */}
-          <div className="flex-1 overflow-hidden">
-            <Editor code={code} onChange={setCode} ui={ui} isDark={isDark} />
-          </div>
-        </Panel>
+              {/* Editor Body */}
+              <div className="flex-1 overflow-hidden">
+                <Editor code={code} onChange={setCode} ui={ui} isDark={isDark} errorLine={errorLine} />
+              </div>
+            </div>
 
-        {/* Resize Handle */}
-        <PanelResizeHandle
-          className={`w-1.5 ${ui.resizeHandle} transition-colors duration-200 z-20`}
-        />
+            {/* Static Border */}
+            <div className={`w-px ${ui.panelBorder} border-l transition-colors duration-200`} />
+          </>
+        )}
 
         {/* Preview Panel */}
-        <Panel defaultSize="60%" minSize="55%" className={`flex flex-col ${ui.previewBg} relative z-0 transition-colors duration-200`}>
+        <div className={`flex-1 flex flex-col ${ui.previewBg} relative z-0 transition-colors duration-200`}>
           {/* Preview Header */}
           <div className={`h-12 border-b ${ui.panelBorder} flex items-center px-4 justify-between shrink-0 ${ui.previewHeaderBg} transition-colors duration-200`}>
             <span className={`text-xs font-medium uppercase tracking-wider ${ui.previewTitle} transition-colors duration-200`}>
@@ -369,6 +479,14 @@ export default function App() {
             </span>
             <div className="flex items-center gap-2">
               <DiagramThemeDropdown value={diagramTheme} onChange={setDiagramTheme} ui={ui} autoLabel={autoLabel} />
+              <button
+                onClick={handleShareLink}
+                disabled={!svgContent}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border rounded-lg transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer ${ui.btnSecondary}`}
+              >
+                {linkCopied ? <Check size={12} className="text-emerald-500" /> : <Link size={12} />}
+                {linkCopied ? 'Copied' : 'Share'}
+              </button>
               <button
                 onClick={handleCopyPNG}
                 disabled={!svgContent}
@@ -383,13 +501,20 @@ export default function App() {
                 onExportSVG={handleExportSVG}
                 ui={ui}
               />
+              <button
+                onClick={() => setIsFullscreen(prev => !prev)}
+                className={`flex items-center gap-1.5 p-1.5 text-xs font-medium border rounded-lg transition-all duration-150 cursor-pointer ${ui.btnSecondary}`}
+                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen preview'}
+              >
+                {isFullscreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+              </button>
             </div>
           </div>
 
           {/* Preview Body */}
           {previewContent}
-        </Panel>
-      </PanelGroup>
+        </div>
+      </div>
     </div>
   );
 }

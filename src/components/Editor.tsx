@@ -8,9 +8,10 @@ interface EditorProps {
   onChange: (code: string) => void;
   ui: UIClasses;
   isDark: boolean;
+  errorLine?: number | null;
 }
 
-export function Editor({ code, onChange, ui, isDark }: EditorProps) {
+export function Editor({ code, onChange, ui, isDark, errorLine }: EditorProps) {
   const lineRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLPreElement>(null);
@@ -52,7 +53,12 @@ export function Editor({ code, onChange, ui, isDark }: EditorProps) {
         className={`w-10 sm:w-12 shrink-0 text-right pr-2 sm:pr-3 py-4 select-none overflow-hidden border-r ${ui.editorLineNum} transition-colors duration-200`}
       >
         {lines.map((_, i) => (
-          <div key={i} className="leading-6">{i + 1}</div>
+          <div
+            key={i}
+            className={`leading-6 ${errorLine === i + 1 ? 'bg-red-500/20 text-red-400' : ''}`}
+          >
+            {i + 1}
+          </div>
         ))}
       </div>
 
@@ -67,7 +73,12 @@ export function Editor({ code, onChange, ui, isDark }: EditorProps) {
               aria-hidden
             >
               {tokens.map((line, i) => (
-                <div key={i} {...getLineProps({ line })} style={{}}>
+                <div
+                  key={i}
+                  {...getLineProps({ line })}
+                  style={{}}
+                  className={errorLine === i + 1 ? 'bg-red-500/10' : ''}
+                >
                   {line.map((token, key) => (
                     <span key={key} {...getTokenProps({ token })} />
                   ))}

@@ -18,7 +18,7 @@ const THEMES: Record<ThemeId, Theme> = {
         panelBorder: 'border-zinc-200',
         iconBg: 'bg-zinc-900',
         iconText: 'text-white',
-        resizeHandle: 'bg-zinc-200 hover:bg-zinc-400',
+
         previewBg: 'bg-zinc-50',
         previewHeaderBg: 'bg-white',
         previewTitle: 'text-zinc-500',
@@ -47,7 +47,7 @@ const THEMES: Record<ThemeId, Theme> = {
         panelBorder: 'border-zinc-800',
         iconBg: 'bg-zinc-100',
         iconText: 'text-zinc-900',
-        resizeHandle: 'bg-zinc-800 hover:bg-zinc-600',
+
         previewBg: 'bg-zinc-950',
         previewHeaderBg: 'bg-zinc-900',
         previewTitle: 'text-zinc-500',
@@ -87,7 +87,7 @@ const THEMES: Record<ThemeId, Theme> = {
         panelBorder: 'border-blue-200',
         iconBg: 'bg-blue-600',
         iconText: 'text-white',
-        resizeHandle: 'bg-blue-200 hover:bg-blue-400',
+
         previewBg: 'bg-slate-50',
         previewHeaderBg: 'bg-white',
         previewTitle: 'text-blue-600',
@@ -116,7 +116,7 @@ const THEMES: Record<ThemeId, Theme> = {
         panelBorder: 'border-blue-900/60',
         iconBg: 'bg-blue-500',
         iconText: 'text-white',
-        resizeHandle: 'bg-blue-900 hover:bg-blue-700',
+
         previewBg: 'bg-slate-950',
         previewHeaderBg: 'bg-slate-900',
         previewTitle: 'text-blue-400',
@@ -156,7 +156,7 @@ const THEMES: Record<ThemeId, Theme> = {
         panelBorder: 'border-emerald-200',
         iconBg: 'bg-emerald-600',
         iconText: 'text-white',
-        resizeHandle: 'bg-emerald-200 hover:bg-emerald-400',
+
         previewBg: 'bg-stone-50',
         previewHeaderBg: 'bg-white',
         previewTitle: 'text-emerald-600',
@@ -185,7 +185,7 @@ const THEMES: Record<ThemeId, Theme> = {
         panelBorder: 'border-emerald-900/60',
         iconBg: 'bg-emerald-500',
         iconText: 'text-white',
-        resizeHandle: 'bg-emerald-900 hover:bg-emerald-700',
+
         previewBg: 'bg-stone-950',
         previewHeaderBg: 'bg-stone-900',
         previewTitle: 'text-emerald-400',
@@ -225,7 +225,7 @@ const THEMES: Record<ThemeId, Theme> = {
         panelBorder: 'border-violet-200',
         iconBg: 'bg-violet-600',
         iconText: 'text-white',
-        resizeHandle: 'bg-violet-200 hover:bg-violet-400',
+
         previewBg: 'bg-neutral-50',
         previewHeaderBg: 'bg-white',
         previewTitle: 'text-violet-600',
@@ -254,7 +254,7 @@ const THEMES: Record<ThemeId, Theme> = {
         panelBorder: 'border-violet-900/60',
         iconBg: 'bg-violet-500',
         iconText: 'text-white',
-        resizeHandle: 'bg-violet-900 hover:bg-violet-700',
+
         previewBg: 'bg-neutral-950',
         previewHeaderBg: 'bg-neutral-900',
         previewTitle: 'text-violet-400',
@@ -294,7 +294,7 @@ const THEMES: Record<ThemeId, Theme> = {
         panelBorder: 'border-orange-200',
         iconBg: 'bg-orange-600',
         iconText: 'text-white',
-        resizeHandle: 'bg-orange-200 hover:bg-orange-400',
+
         previewBg: 'bg-orange-50/60',
         previewHeaderBg: 'bg-white',
         previewTitle: 'text-orange-600',
@@ -323,7 +323,7 @@ const THEMES: Record<ThemeId, Theme> = {
         panelBorder: 'border-orange-900/60',
         iconBg: 'bg-orange-500',
         iconText: 'text-white',
-        resizeHandle: 'bg-orange-900 hover:bg-orange-700',
+
         previewBg: 'bg-stone-950',
         previewHeaderBg: 'bg-stone-900',
         previewTitle: 'text-orange-400',
