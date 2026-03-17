@@ -53,9 +53,12 @@ export function MobileBottomSheet({ open, onClose, title, ui, children }: Mobile
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto px-5 py-4 safe-area-bottom">
+        <div className="overflow-y-auto px-5 pt-4 pb-6">
           {children}
         </div>
+
+        {/* Safe area spacer — ensures content isn't hidden behind home indicator */}
+        <div className="shrink-0 safe-area-bottom" />
       </div>
     </div>
   );
