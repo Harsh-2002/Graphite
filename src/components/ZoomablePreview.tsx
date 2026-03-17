@@ -7,9 +7,11 @@ interface ZoomablePreviewProps {
   children: React.ReactNode;
   svgContent: string;
   ui: UIClasses;
+  /** Compact zoom controls for mobile */
+  compact?: boolean;
 }
 
-export function ZoomablePreview({ children, svgContent, ui }: ZoomablePreviewProps) {
+export function ZoomablePreview({ children, svgContent, ui, compact }: ZoomablePreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const { scale, translateX, translateY, onMouseDown, zoomIn, zoomOut, setTransform } = useZoomPan(containerRef);
@@ -56,8 +58,9 @@ export function ZoomablePreview({ children, svgContent, ui }: ZoomablePreviewPro
     return () => observer.disconnect();
   }, [centerContent]);
 
-  // Track panning state for cursor
+  // Track panning state for cursor (desktop only)
   useEffect(() => {
+    if (compact) return;
     const handleMouseDown = () => setIsPanning(true);
     const handleMouseUp = () => setIsPanning(false);
     window.addEventListener('mousedown', handleMouseDown);
@@ -66,7 +69,7 @@ export function ZoomablePreview({ children, svgContent, ui }: ZoomablePreviewPro
       window.removeEventListener('mousedown', handleMouseDown);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, []);
+  }, [compact]);
 
   const zoomPercent = Math.round(scale * 100);
 
@@ -75,9 +78,9 @@ export function ZoomablePreview({ children, svgContent, ui }: ZoomablePreviewPro
       {/* Zoomable/pannable canvas */}
       <div
         ref={containerRef}
-        className="flex-1 overflow-hidden"
-        onMouseDown={onMouseDown}
-        style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+        className="flex-1 overflow-hidden touch-none"
+        onMouseDown={compact ? undefined : onMouseDown}
+        style={compact ? undefined : { cursor: isPanning ? 'grabbing' : 'grab' }}
       >
         <div
           ref={contentRef}
@@ -91,32 +94,32 @@ export function ZoomablePreview({ children, svgContent, ui }: ZoomablePreviewPro
         </div>
       </div>
 
-      {/* Always-visible zoom controls — pinned to bottom */}
-      <div className="shrink-0 flex justify-center py-2 pointer-events-none">
+      {/* Zoom controls */}
+      <div className={`shrink-0 flex justify-center ${compact ? 'py-1.5' : 'py-2'} pointer-events-none`}>
         <div className={`pointer-events-auto flex items-center gap-0.5 px-1.5 py-1 rounded-xl border ${ui.panelBg} ${ui.panelBorder} shadow-sm`}>
           <button
             onClick={zoomOut}
-            className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer hover:opacity-80 ${ui.btnSecondary} border-0`}
+            className={`${compact ? 'p-1' : 'p-1.5'} rounded-lg transition-all duration-150 cursor-pointer hover:opacity-80 active:scale-90 ${ui.btnSecondary} border-0`}
             title="Zoom out"
           >
-            <Minus size={14} />
+            <Minus size={compact ? 12 : 14} />
           </button>
-          <span className="text-[11px] font-mono font-medium px-2 min-w-[3.5rem] text-center select-none opacity-80">
+          <span className={`${compact ? 'text-[10px] min-w-[3rem]' : 'text-[11px] min-w-[3.5rem]'} font-mono font-medium px-1.5 text-center select-none opacity-80`}>
             {zoomPercent}%
           </span>
           <button
             onClick={zoomIn}
-            className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer hover:opacity-80 ${ui.btnSecondary} border-0`}
+            className={`${compact ? 'p-1' : 'p-1.5'} rounded-lg transition-all duration-150 cursor-pointer hover:opacity-80 active:scale-90 ${ui.btnSecondary} border-0`}
             title="Zoom in"
           >
-            <Plus size={14} />
+            <Plus size={compact ? 12 : 14} />
           </button>
           <button
-            onClick={centerContent}
-            className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer hover:opacity-80 ${ui.btnSecondary} border-0`}
+            onClick={() => centerContent(true)}
+            className={`${compact ? 'p-1' : 'p-1.5'} rounded-lg transition-all duration-150 cursor-pointer hover:opacity-80 active:scale-90 ${ui.btnSecondary} border-0`}
             title="Reset zoom"
           >
-            <RotateCcw size={14} />
+            <RotateCcw size={compact ? 12 : 14} />
           </button>
         </div>
       </div>

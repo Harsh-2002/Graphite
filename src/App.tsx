@@ -215,7 +215,7 @@ export default function App() {
   // Diagram card (used in both zoom and non-zoom paths)
   const diagramCard = svgContent ? (
     <div
-      className={`border shadow-lg rounded-2xl p-4 sm:p-8 transition-all duration-200 z-10 flex items-center justify-center ${
+      className={`border shadow-lg rounded-2xl p-4 sm:p-8 transition-all duration-200 z-10 flex items-center justify-center overflow-hidden [&>svg]:max-w-full [&>svg]:h-auto ${
         diagramTheme === 'auto'
           ? `${ui.panelBg} ${ui.panelBorder}`
           : diagramIsDark
@@ -263,9 +263,9 @@ export default function App() {
         }}
       />
 
-      {!isMobile && svgContent && !error ? (
-        <ZoomablePreview svgContent={svgContent} ui={ui}>
-          <div className="p-6">
+      {svgContent && !error ? (
+        <ZoomablePreview svgContent={svgContent} ui={ui} compact={isMobile}>
+          <div className={isMobile ? 'p-3' : 'p-6'}>
             {diagramCard}
           </div>
         </ZoomablePreview>
