@@ -165,13 +165,29 @@ export default function App() {
     if (!svgContent) return;
     try {
       const blob = await svgToPng(svgContent, 3, isDark, getActiveColors());
-      await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': blob }),
-      ]);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy PNG:', err);
+      // Try clipboard API first (desktop browsers)
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob }),
+        ]);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        // Fallback: download PNG (iOS Safari doesn't support ClipboardItem for images)
+        downloadBlob(blob, 'graphite-diagram.png');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch {
+      // Clipboard write failed (e.g. permissions) — fall back to download
+      try {
+        const blob = await svgToPng(svgContent, 3, isDark, getActiveColors());
+        downloadBlob(blob, 'graphite-diagram.png');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error('Failed to copy/download PNG:', err);
+      }
     }
   };
 
@@ -290,51 +306,55 @@ export default function App() {
       <div
         className={`h-[100dvh] w-screen flex flex-col overflow-hidden font-sans transition-colors duration-200 ${ui.appBg} ${ui.appText} ${ui.selection}`}
       >
-        {/* Mobile Header - matches browser chrome color for seamless blend */}
+        {/* Mobile Header */}
         <div className={`shrink-0 safe-area-top ${ui.mobileToolbarBg} transition-colors duration-200`}>
-          <div className={`h-14 border-b ${ui.mobileToolbarBorder} flex items-center px-4 justify-between`}>
-            <div className="flex items-center gap-2.5 font-semibold text-[15px] tracking-tight">
+          <div className={`h-12 border-b ${ui.mobileToolbarBorder} flex items-center px-3 justify-between gap-2`}>
+            {/* Logo */}
+            <div className="flex items-center gap-2 font-semibold text-[15px] tracking-tight shrink-0">
               <div className={`w-7 h-7 rounded-lg ${ui.iconBg} ${ui.iconText} flex items-center justify-center`}>
                 <Code size={15} strokeWidth={2.5} />
               </div>
               Graphite
             </div>
-            <div className="flex items-center gap-2">
+
+            {/* Actions */}
+            <div className="flex items-center gap-1.5">
               {/* Editor-mode actions */}
               {mobileTab === 'editor' && (
                 <TemplateDropdown onSelect={setCode} currentCode={code} ui={ui} />
               )}
-              {/* Preview-mode actions */}
+              {/* Preview-mode actions — icon-only for space */}
               {mobileTab === 'preview' && svgContent && (
                 <>
                   <button
                     onClick={handleShareLink}
-                    className={`h-9 flex items-center gap-1.5 px-3 text-xs font-medium border rounded-xl transition-all duration-150 active:scale-95 ${ui.btnSecondary}`}
+                    className={`h-8 w-8 flex items-center justify-center rounded-lg border transition-all duration-150 active:scale-90 ${ui.btnSecondary}`}
+                    aria-label="Share link"
                   >
-                    {linkCopied ? <Check size={14} className="text-emerald-500" /> : <Link size={14} />}
-                    {linkCopied ? 'Copied!' : 'Share'}
+                    {linkCopied ? <Check size={15} className="text-emerald-500" /> : <Link size={15} />}
                   </button>
                   <button
                     onClick={handleCopyPNG}
-                    className={`h-9 flex items-center gap-1.5 px-3 text-xs font-medium border rounded-xl transition-all duration-150 active:scale-95 ${ui.btnSecondary}`}
+                    className={`h-8 w-8 flex items-center justify-center rounded-lg border transition-all duration-150 active:scale-90 ${ui.btnSecondary}`}
+                    aria-label="Copy as PNG"
                   >
-                    {copied ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                    {copied ? 'Copied!' : 'Copy'}
+                    {copied ? <Check size={15} className="text-emerald-500" /> : <Copy size={15} />}
                   </button>
                   <button
                     onClick={() => setExportSheetOpen(true)}
-                    className={`h-9 w-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95 shadow-sm ${ui.btnPrimary}`}
+                    className={`h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 active:scale-90 shadow-sm ${ui.btnPrimary}`}
+                    aria-label="Export"
                   >
-                    <Download size={16} />
+                    <Download size={15} />
                   </button>
                 </>
               )}
               <button
                 onClick={() => setSettingsOpen(true)}
-                className={`h-9 w-9 flex items-center justify-center rounded-xl transition-all duration-150 active:scale-95 ${ui.btnSecondary} border`}
+                className={`h-8 w-8 flex items-center justify-center rounded-lg transition-all duration-150 active:scale-90 ${ui.btnSecondary} border`}
                 aria-label="Settings"
               >
-                <Settings size={16} />
+                <Settings size={15} />
               </button>
             </div>
           </div>
