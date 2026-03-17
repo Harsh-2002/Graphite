@@ -49,10 +49,13 @@ export function ZoomablePreview({ children, svgContent, ui, compact }: ZoomableP
   }, [svgContent, centerContent]);
 
   // Re-center (keeping zoom level) when container resizes (e.g. fullscreen toggle)
+  // Skip the initial fire — the svgContent effect handles first render
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    let skipFirst = true;
     const observer = new ResizeObserver(() => {
+      if (skipFirst) { skipFirst = false; return; }
       centerContent();
     });
     observer.observe(el);
